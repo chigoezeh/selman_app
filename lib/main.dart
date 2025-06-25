@@ -68,39 +68,39 @@ class _ContentListScreenState extends State<ContentListScreen> {
     setState(() {
       _contentFuture = _apiService.fetchContent();
     });
-    return _contentFuture;
+    await _contentFuture;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: FutureBuilder<List<Content>>(
-          future: _contentFuture, // The future we want to build the UI based on
-          builder: (context, snapshot) {
-            // Check the state of the Future
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              // If we're still waiting for data, show a loading spinner
-              return const CircularProgressIndicator();
-            } else if (snapshot.hasError) {
-              // If there was an error, display it
-              return Text('Error: ${snapshot.error}');
-            } else if (snapshot.hasData) {
-              // If we have data, build the list view
-              final contentList = snapshot.data!;
-              return ListView.builder(
-                itemCount: contentList.length,
-                itemBuilder: (context, index) {
-                  final contentItem = contentList[index];
-                  // Replace ListTile with our new custom widget
-                  return ContentCard(content: contentItem);
-                },
-              );
-            } else {
-              // Default case
-              return const Text('No content found.');
-            }
-          },
+      appBar: AppBar(
+        title: const Text('What\'s New'),
+      ),
+      body: RefreshIndicator(
+        onRefresh: _onRefresh, // The function to call when pulled
+        child: Center(
+          child: FutureBuilder<List<Content>>(
+            future: _contentFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const CircularProgressIndicator();
+              } else if (snapshot.hasError) {
+                return Text('Error: ${snapshot.error}');
+              } else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+                final contentList = snapshot.data!;
+                return ListView.builder(
+                  itemCount: contentList.length,
+                  itemBuilder: (context, index) {
+                    final contentItem = contentList[index];
+                    return ContentCard(content: contentItem);
+                  },
+                );
+              } else {
+                return const Text('No content found.');
+              }
+            },
+          ),
         ),
       ),
     );
