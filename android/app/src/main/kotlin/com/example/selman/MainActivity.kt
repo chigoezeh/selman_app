@@ -1,4 +1,4 @@
-package com.example.selman_appo
+package com.example.selman
 
 import io.flutter.embedding.android.FlutterActivity
 

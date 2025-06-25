@@ -1,6 +1,6 @@
 {
-    "name": "selman_appo",
-    "short_name": "selman_appo",
+    "name": "selman",
+    "short_name": "selman",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
