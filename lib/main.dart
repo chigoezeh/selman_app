@@ -1,3 +1,4 @@
+import 'package:selman/screens/main_app_shell.dart';
 import 'package:flutter/material.dart';
 import 'package:selman/models/content.dart';
 import 'package:selman/services/api_service.dart';
@@ -29,7 +30,7 @@ class MyApp extends StatelessWidget {
           secondary: Colors.tealAccent,
         ),
       ),
-      home: const ContentListScreen(),
+      home: const MainAppShell(),
     );
   }
 }
