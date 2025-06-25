@@ -47,21 +47,33 @@ class _ContentListScreenState extends State<ContentListScreen> {
   final ApiService _apiService = ApiService();
 
   // A variable to hold the result of our API call
-  late Future<List<Content>> _contentFuture;
+  Future<List<Content>>? _contentFuture;
 
   @override
   void initState() {
     super.initState();
-    // Start fetching the content as soon as the screen is initialized
-    _contentFuture = _apiService.fetchContent();
+    // Start the initial fetch
+    _fetchContent();
+  }
+
+  // Create a dedicated method for fetching data
+  void _fetchContent() {
+    setState(() {
+      _contentFuture = _apiService.fetchContent();
+    });
+  }
+
+  // Create the method that the RefreshIndicator will call
+  Future<void> _onRefresh() async {
+    setState(() {
+      _contentFuture = _apiService.fetchContent();
+    });
+    return _contentFuture;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('What\'s New'),
-      ),
       body: Center(
         child: FutureBuilder<List<Content>>(
           future: _contentFuture, // The future we want to build the UI based on
