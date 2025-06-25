@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:selman/models/content.dart';
 import 'package:selman/services/api_service.dart';
+import 'package:selman/widgets/content_card.dart';
 
 void main() {
   runApp(const MyApp());
@@ -78,11 +79,8 @@ class _ContentListScreenState extends State<ContentListScreen> {
                 itemCount: contentList.length,
                 itemBuilder: (context, index) {
                   final contentItem = contentList[index];
-                  return ListTile(
-                    leading: const Icon(Icons.video_library),
-                    title: Text(contentItem.title),
-                    subtitle: Text(contentItem.minister?.name ?? 'N/A'),
-                  );
+                  // Replace ListTile with our new custom widget
+                  return ContentCard(content: contentItem);
                 },
               );
             } else {
