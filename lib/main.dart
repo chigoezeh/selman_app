@@ -12,13 +12,12 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Selman App',
-      themeMode: ThemeMode.dark, // Use the dark theme
+      title: 'Selman',
+      themeMode: ThemeMode.dark,
       darkTheme: ThemeData(
         brightness: Brightness.dark,
         primaryColor: Colors.deepPurple,
-        scaffoldBackgroundColor:
-            const Color(0xFF121212), // Spotify-like dark background
+        scaffoldBackgroundColor: const Color(0xFF121212),
         cardColor: const Color(0xFF282828), // Dark card color
         appBarTheme: const AppBarTheme(
           backgroundColor: Color(0xFF121212),
