@@ -1,0 +1,44 @@
+import 'package:selman/models/category.dart';
+import 'package:selman/models/minister.dart';
+import 'package:selman/models/organization.dart';
+
+class Content {
+  final int id;
+  final String title;
+  final String? description;
+  final String mediaType;
+  final String mediaUrl;
+  final int durationInSeconds;
+  final Category category;
+  final Minister? minister;
+  final Organization? organization;
+
+  Content({
+    required this.id,
+    required this.title,
+    this.description,
+    required this.mediaType,
+    required this.mediaUrl,
+    required this.durationInSeconds,
+    required this.category,
+    this.minister,
+    this.organization,
+  });
+
+  factory Content.fromJson(Map<String, dynamic> json) {
+    return Content(
+      id: json['id'],
+      title: json['title'],
+      description: json['description'],
+      mediaType: json['media_type'],
+      mediaUrl: json['media_url'],
+      durationInSeconds: json['duration_in_seconds'],
+      category: Category.fromJson(json['category']),
+      minister:
+          json['minister'] != null ? Minister.fromJson(json['minister']) : null,
+      organization: json['organization'] != null
+          ? Organization.fromJson(json['organization'])
+          : null,
+    );
+  }
+}
