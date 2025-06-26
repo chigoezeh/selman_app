@@ -1,3 +1,4 @@
+import 'package:selman/screens/main_app_shell.dart';
 import 'package:flutter/material.dart';
 import 'package:selman/models/content.dart';
 import 'package:selman/services/api_service.dart';
@@ -29,7 +30,7 @@ class MyApp extends StatelessWidget {
           secondary: Colors.tealAccent,
         ),
       ),
-      home: const ContentListScreen(),
+      home: const MainAppShell(),
     );
   }
 }
@@ -46,13 +47,28 @@ class _ContentListScreenState extends State<ContentListScreen> {
   final ApiService _apiService = ApiService();
 
   // A variable to hold the result of our API call
-  late Future<List<Content>> _contentFuture;
+  Future<List<Content>>? _contentFuture;
 
   @override
   void initState() {
     super.initState();
-    // Start fetching the content as soon as the screen is initialized
-    _contentFuture = _apiService.fetchContent();
+    // Start the initial fetch
+    _fetchContent();
+  }
+
+  // Create a dedicated method for fetching data
+  void _fetchContent() {
+    setState(() {
+      _contentFuture = _apiService.fetchContent();
+    });
+  }
+
+  // Create the method that the RefreshIndicator will call
+  Future<void> _onRefresh() async {
+    setState(() {
+      _contentFuture = _apiService.fetchContent();
+    });
+    await _contentFuture;
   }
 
   @override
@@ -61,33 +77,30 @@ class _ContentListScreenState extends State<ContentListScreen> {
       appBar: AppBar(
         title: const Text('What\'s New'),
       ),
-      body: Center(
-        child: FutureBuilder<List<Content>>(
-          future: _contentFuture, // The future we want to build the UI based on
-          builder: (context, snapshot) {
-            // Check the state of the Future
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              // If we're still waiting for data, show a loading spinner
-              return const CircularProgressIndicator();
-            } else if (snapshot.hasError) {
-              // If there was an error, display it
-              return Text('Error: ${snapshot.error}');
-            } else if (snapshot.hasData) {
-              // If we have data, build the list view
-              final contentList = snapshot.data!;
-              return ListView.builder(
-                itemCount: contentList.length,
-                itemBuilder: (context, index) {
-                  final contentItem = contentList[index];
-                  // Replace ListTile with our new custom widget
-                  return ContentCard(content: contentItem);
-                },
-              );
-            } else {
-              // Default case
-              return const Text('No content found.');
-            }
-          },
+      body: RefreshIndicator(
+        onRefresh: _onRefresh, // The function to call when pulled
+        child: Center(
+          child: FutureBuilder<List<Content>>(
+            future: _contentFuture,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const CircularProgressIndicator();
+              } else if (snapshot.hasError) {
+                return Text('Error: ${snapshot.error}');
+              } else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+                final contentList = snapshot.data!;
+                return ListView.builder(
+                  itemCount: contentList.length,
+                  itemBuilder: (context, index) {
+                    final contentItem = contentList[index];
+                    return ContentCard(content: contentItem);
+                  },
+                );
+              } else {
+                return const Text('No content found.');
+              }
+            },
+          ),
         ),
       ),
     );
