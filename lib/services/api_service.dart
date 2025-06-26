@@ -29,4 +29,31 @@ class ApiService {
       throw Exception('Failed to load content from API');
     }
   }
+
+  // Method to handle user login
+  Future<String> login(String email, String password) async {
+    final response = await http.post(
+      Uri.parse('$_baseUrl/login'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Accept': 'application/json',
+      },
+      body: jsonEncode(<String, String>{
+        'email': email,
+        'password': password,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      // If the server returns a 200 OK response, parse the JSON
+      // and return the token.
+      final data = jsonDecode(response.body);
+      return data['token'];
+    } else {
+      // If the server did not return a 200 OK response,
+      // parse the error message and throw an exception.
+      final errorData = jsonDecode(response.body);
+      throw Exception(errorData['message'] ?? 'Failed to login.');
+    }
+  }
 }
