@@ -1,3 +1,5 @@
+import 'package:provider/provider.dart';
+import 'package:selman/providers/auth_provider.dart';
 import 'package:selman/screens/main_app_shell.dart';
 import 'package:flutter/material.dart';
 import 'package:selman/models/content.dart';
@@ -5,7 +7,12 @@ import 'package:selman/services/api_service.dart';
 import 'package:selman/widgets/content_card.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (context) => AuthProvider(),
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
