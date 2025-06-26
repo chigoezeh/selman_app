@@ -56,4 +56,38 @@ class ApiService {
       throw Exception(errorData['message'] ?? 'Failed to login.');
     }
   }
+
+  // Method to handle user registration
+  Future<void> register({
+    required String name,
+    required String email,
+    required String password,
+    required String passwordConfirmation,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$_baseUrl/register'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Accept': 'application/json',
+      },
+      body: jsonEncode(<String, String>{
+        'name': name,
+        'email': email,
+        'password': password,
+        'password_confirmation': passwordConfirmation,
+      }),
+    );
+
+    if (response.statusCode != 201) {
+      // If the server did not return a 201 Created response,
+      // throw an exception with the error message.
+      final errorData = jsonDecode(response.body);
+      // We'll grab the first error from the 'errors' map if it exists.
+      final errorMessage = errorData['errors']?.values?.first[0] ??
+          errorData['message'] ??
+          'Failed to register.';
+      throw Exception(errorMessage);
+    }
+    // If registration is successful, we don't need to return anything.
+  }
 }
