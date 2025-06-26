@@ -1,7 +1,7 @@
-import 'package:selman/screens/auth_wrapper.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:selman/providers/auth_provider.dart';
-import 'package:flutter/material.dart';
+import 'package:selman/screens/auth_wrapper.dart';
 
 void main() {
   runApp(
@@ -24,7 +24,7 @@ class MyApp extends StatelessWidget {
         brightness: Brightness.dark,
         primaryColor: Colors.deepPurple,
         scaffoldBackgroundColor: const Color(0xFF121212),
-        cardColor: const Color(0xFF282828), // Dark card color
+        cardColor: const Color(0xFF282828),
         appBarTheme: const AppBarTheme(
           backgroundColor: Color(0xFF121212),
           elevation: 0,

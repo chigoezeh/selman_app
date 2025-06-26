@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:selman/main.dart'; // We need to import main.dart to get ContentListScreen
+import 'package:selman/screens/home_screen.dart';
 import 'package:selman/screens/library_screen.dart';
 import 'package:selman/screens/search_screen.dart';
 
