@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:selman/providers/auth_provider.dart';
 import 'package:selman/screens/main_app_shell.dart';
-// import 'package:selman/screens/login_screen.dart';
+import 'package:selman/screens/login_screen.dart';
 
 class AuthWrapper extends StatelessWidget {
   const AuthWrapper({super.key});
@@ -17,10 +17,7 @@ class AuthWrapper extends StatelessWidget {
           return const MainAppShell();
         } else {
           // If not, show the LoginScreen
-          // For now, we'll just use a placeholder
-          return const Scaffold(
-              body: Center(child: Text('Login Screen Placeholder')));
-          // return const LoginScreen();
+          return const LoginScreen();
         }
       },
     );
