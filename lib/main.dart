@@ -1,3 +1,4 @@
+import 'package:selman/screens/auth_wrapper.dart';
 import 'package:provider/provider.dart';
 import 'package:selman/providers/auth_provider.dart';
 import 'package:selman/screens/main_app_shell.dart';
@@ -37,7 +38,7 @@ class MyApp extends StatelessWidget {
           secondary: Colors.tealAccent,
         ),
       ),
-      home: const MainAppShell(),
+      home: const AuthWrapper(),
     );
   }
 }
