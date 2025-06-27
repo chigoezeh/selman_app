@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:selman/models/user.dart';
 import 'package:selman/services/api_service.dart';
 
 // The AuthProvider extends ChangeNotifier, which allows it to notify listeners of changes.
@@ -7,26 +8,25 @@ class AuthProvider with ChangeNotifier {
 
   bool _isAuthenticated = false;
   String? _token;
-  // We can add a User model object here later
-  // User? _user;
+  User? _user;
 
   // Public getters to access the state from the UI
   bool get isAuthenticated => _isAuthenticated;
   String? get token => _token;
-  // User? get user => _user;
+  User? get user => _user;
 
   Future<void> login(String email, String password) async {
     try {
       final token = await _apiService.login(email, password);
       _token = token;
+
+      // After getting the token, fetch the user's data
+      final user = await _apiService.fetchUser(_token!);
+      _user = user;
+
       _isAuthenticated = true;
-
-      // TODO: Securely store the token on the device
-
-      // Notify all listening widgets that the auth state has changed.
       notifyListeners();
     } catch (e) {
-      // Re-throw the exception to be caught by the UI
       rethrow;
     }
   }
