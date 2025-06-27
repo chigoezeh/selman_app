@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:selman/providers/auth_provider.dart';
+import 'package:selman/screens/main_app_shell.dart';
 
 class RegistrationScreen extends StatefulWidget {
   const RegistrationScreen({super.key});
@@ -30,15 +31,19 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     });
 
     try {
-      // Use the AuthProvider to call the register method
       await Provider.of<AuthProvider>(context, listen: false).register(
         name: _nameController.text,
         email: _emailController.text,
         password: _passwordController.text,
         passwordConfirmation: _confirmPasswordController.text,
       );
-      // If registration and subsequent login are successful, the AuthWrapper
-      // will automatically handle navigating to the home screen.
+
+      if (!context.mounted) return;
+
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => const MainAppShell()),
+        (route) => false,
+      );
     } catch (error) {
       setState(() {
         _errorMessage = error.toString().replaceFirst('Exception: ', '');
