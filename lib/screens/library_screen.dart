@@ -5,9 +5,9 @@ class LibraryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      appBar: AppBar(title: Text('My Library')),
-      body: Center(
+    return Scaffold(
+      appBar: AppBar(title: const Text('My Library')),
+      body: const Center(
         child: Text('Playlists, Favorites, and Downloads will appear here.'),
       ),
     );
