@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:selman/providers/auth_provider.dart';
+import 'package:selman/screens/registration_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -133,7 +134,18 @@ class _LoginScreenState extends State<LoginScreen> {
                         child: const Text('Login'),
                       ),
 
-                // We'll add a "Don't have an account?" button here later
+                const SizedBox(height: 16),
+                TextButton(
+                  onPressed: () {
+                    // Navigate to the RegistrationScreen
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const RegistrationScreen(),
+                      ),
+                    );
+                  },
+                  child: const Text('Don\'t have an account? Sign Up'),
+                )
               ],
             ),
           ),
