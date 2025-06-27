@@ -51,10 +51,19 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  void logout() {
+  Future<void> logout() async {
+    if (_token != null) {
+      try {
+        await _apiService.logout(_token!);
+      } catch (e) {
+        // Handle potential errors if the server can't be reached
+        print('Error logging out from server: $e');
+      }
+    }
+
     _isAuthenticated = false;
     _token = null;
-    // TODO: Clear the token from secure storage
+    _user = null;
     notifyListeners();
   }
 }
