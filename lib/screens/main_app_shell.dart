@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:selman/screens/home_screen.dart';
-import 'package:selman/screens/profile_screen.dart';
+import 'package:selman/screens/library_screen.dart';
 import 'package:selman/screens/search_screen.dart';
 
 class MainAppShell extends StatefulWidget {
@@ -17,7 +17,7 @@ class _MainAppShellState extends State<MainAppShell> {
   static const List<Widget> _widgetOptions = <Widget>[
     ContentListScreen(),
     SearchScreen(),
-    ProfileScreen(),
+    LibraryScreen(),
   ];
 
   void _onItemTapped(int index) {
@@ -43,8 +43,8 @@ class _MainAppShellState extends State<MainAppShell> {
             label: 'Search',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profile',
+            icon: Icon(Icons.video_library),
+            label: 'Library',
           ),
         ],
         currentIndex: _selectedIndex,
