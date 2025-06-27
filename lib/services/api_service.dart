@@ -108,4 +108,20 @@ class ApiService {
       throw Exception('Failed to fetch user data.');
     }
   }
+
+  // Method to log the user out
+  Future<void> logout(String token) async {
+    final response = await http.post(
+      Uri.parse('$_baseUrl/logout'),
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode != 200) {
+      // It's okay if it fails, we'll log the user out on the client-side anyway
+      print('Failed to logout on server: ${response.body}');
+    }
+  }
 }
