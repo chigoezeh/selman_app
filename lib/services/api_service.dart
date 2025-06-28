@@ -153,4 +153,24 @@ class ApiService {
       throw Exception('Failed to create playlist.');
     }
   }
+
+  // Method to fetch the playlists for the authenticated user
+  Future<List<Playlist>> fetchPlaylists(String token) async {
+    final response = await http.get(
+      Uri.parse('$_baseUrl/playlists'),
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token', // We must send the token
+      },
+    );
+
+    if (response.statusCode == 200) {
+      List<dynamic> body = jsonDecode(response.body);
+      List<Playlist> playlists =
+          body.map((dynamic item) => Playlist.fromJson(item)).toList();
+      return playlists;
+    } else {
+      throw Exception('Failed to load playlists.');
+    }
+  }
 }
