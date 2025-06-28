@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:selman/models/playlist.dart';
 import 'package:selman/providers/auth_provider.dart';
+import 'package:selman/services/api_service.dart';
 
 class LibraryScreen extends StatefulWidget {
   const LibraryScreen({super.key});
@@ -10,7 +12,18 @@ class LibraryScreen extends StatefulWidget {
 }
 
 class _LibraryScreenState extends State<LibraryScreen> {
-  // We will fetch and display playlists here later
+  final ApiService _apiService = ApiService();
+  Future<List<Playlist>>? _playlistsFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    // We need the token to fetch playlists, so we get it from our AuthProvider
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    if (authProvider.isAuthenticated && authProvider.token != null) {
+      _playlistsFuture = _apiService.fetchPlaylists(authProvider.token!);
+    }
+  }
 
   // This function will show the dialog for creating a new playlist.
   void _showCreatePlaylistDialog(BuildContext context) {
@@ -107,9 +120,35 @@ class _LibraryScreenState extends State<LibraryScreen> {
       appBar: AppBar(
         title: const Text('My Library'),
       ),
-      body: const Center(
-        child: Text('Your playlists will appear here.'),
-        // Later, we will replace this with a ListView of playlists
+      body: FutureBuilder<List<Playlist>>(
+        future: _playlistsFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          } else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+            final playlists = snapshot.data!;
+            return ListView.builder(
+              itemCount: playlists.length,
+              itemBuilder: (context, index) {
+                final playlist = playlists[index];
+                return ListTile(
+                  leading: const Icon(Icons.queue_music),
+                  title: Text(playlist.name),
+                  subtitle: Text(playlist.description ?? 'No description'),
+                  trailing: const Icon(Icons.arrow_forward_ios),
+                  onTap: () {
+                    // Later, we will navigate to a detail screen for this playlist
+                  },
+                );
+              },
+            );
+          } else {
+            return const Center(
+                child: Text('You haven\'t created any playlists yet.'));
+          }
+        },
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showCreatePlaylistDialog(context),
