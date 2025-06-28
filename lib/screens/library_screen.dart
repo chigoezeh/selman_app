@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:selman/models/playlist.dart';
 import 'package:selman/providers/auth_provider.dart';
 import 'package:selman/services/api_service.dart';
+import 'package:selman/screens/playlist_detail_screen.dart';
 
 class LibraryScreen extends StatefulWidget {
   const LibraryScreen({super.key});
@@ -137,9 +138,15 @@ class _LibraryScreenState extends State<LibraryScreen> {
                   leading: const Icon(Icons.queue_music),
                   title: Text(playlist.name),
                   subtitle: Text(playlist.description ?? 'No description'),
-                  trailing: const Icon(Icons.arrow_forward_ios),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                   onTap: () {
-                    // Later, we will navigate to a detail screen for this playlist
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            PlaylistDetailScreen(playlist: playlist),
+                      ),
+                    );
                   },
                 );
               },
