@@ -19,6 +19,11 @@ class _LibraryScreenState extends State<LibraryScreen> {
     final descriptionController = TextEditingController();
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
+    // Capture context-dependent variables BEFORE the async gap.
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final theme = Theme.of(context);
+    final navigator = Navigator.of(context);
+
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) {
@@ -27,7 +32,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
           content: Form(
             key: formKey,
             child: Column(
-              mainAxisSize: MainAxisSize.min, // Make the dialog content compact
+              mainAxisSize: MainAxisSize.min,
               children: [
                 TextFormField(
                   controller: nameController,
@@ -48,37 +53,42 @@ class _LibraryScreenState extends State<LibraryScreen> {
             TextButton(
               child: const Text('Cancel'),
               onPressed: () {
-                Navigator.of(dialogContext).pop(); // Close the dialog
+                Navigator.of(dialogContext).pop();
               },
             ),
             ElevatedButton(
               child: const Text('Create'),
               onPressed: () async {
                 if (formKey.currentState?.validate() ?? false) {
+                  // This is the beginning of the async gap
                   try {
-                    // Call the provider method to create the playlist
                     await authProvider.createPlaylist(
                       name: nameController.text,
                       description: descriptionController.text,
                     );
 
-                    // Close the dialog on success
-                    if (mounted) Navigator.of(dialogContext).pop();
+                    // Check if the widget is still mounted AFTER the async gap.
+                    if (!mounted) return;
 
-                    // Show a success message
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    navigator
+                        .pop(); // Close the dialog using the captured navigator
+
+                    scaffoldMessenger.showSnackBar(
+                      // Use the captured scaffoldMessenger
                       const SnackBar(
                         content: Text('Playlist created successfully!'),
                         backgroundColor: Colors.green,
                       ),
                     );
                   } catch (error) {
-                    // Show an error message if something goes wrong
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    if (!mounted) return;
+
+                    scaffoldMessenger.showSnackBar(
                       SnackBar(
                         content: Text(
                             'Error: ${error.toString().replaceFirst('Exception: ', '')}'),
-                        backgroundColor: Theme.of(context).colorScheme.error,
+                        backgroundColor:
+                            theme.colorScheme.error, // Use the captured theme
                       ),
                     );
                   }
