@@ -4,6 +4,7 @@ import 'package:selman/models/playlist.dart';
 import 'package:selman/providers/auth_provider.dart';
 import 'package:selman/services/api_service.dart';
 import 'package:selman/widgets/content_card.dart';
+import 'package:selman/widgets/playlist_content_tile.dart';
 
 class PlaylistDetailScreen extends StatefulWidget {
   final Playlist playlist;
@@ -77,9 +78,14 @@ class _PlaylistDetailScreenState extends State<PlaylistDetailScreen> {
           return ListView.builder(
             itemCount: playlist.contents!.length,
             itemBuilder: (context, index) {
-              final contentItem = playlist.contents![index];
-              // We can reuse the same ContentCard we made for the home screen!
-              return ContentCard(content: contentItem);
+              return ListView.builder(
+                itemCount: playlist.contents!.length,
+                itemBuilder: (context, index) {
+                  final contentItem = playlist.contents![index];
+                  // Use our new, compact tile instead of the big card
+                  return PlaylistContentTile(content: contentItem);
+                },
+              );
             },
           );
         },
