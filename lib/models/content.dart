@@ -9,7 +9,7 @@ class Content {
   final String mediaType;
   final String mediaUrl;
   final int durationInSeconds;
-  final Category category;
+  final Category? category;
   final Minister? minister;
   final Organization? organization;
 
@@ -20,7 +20,7 @@ class Content {
     required this.mediaType,
     required this.mediaUrl,
     required this.durationInSeconds,
-    required this.category,
+    this.category,
     this.minister,
     this.organization,
   });
@@ -33,7 +33,9 @@ class Content {
       mediaType: json['media_type'],
       mediaUrl: json['media_url'],
       durationInSeconds: json['duration_in_seconds'],
-      category: Category.fromJson(json['category']),
+      // We now check if 'category' is null before trying to parse it.
+      category:
+          json['category'] != null ? Category.fromJson(json['category']) : null,
       minister:
           json['minister'] != null ? Minister.fromJson(json['minister']) : null,
       organization: json['organization'] != null
