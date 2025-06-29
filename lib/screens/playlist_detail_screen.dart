@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:selman/models/playlist.dart';
 import 'package:selman/providers/auth_provider.dart';
 import 'package:selman/services/api_service.dart';
-import 'package:selman/widgets/content_card.dart';
 import 'package:selman/widgets/playlist_content_tile.dart';
 
 class PlaylistDetailScreen extends StatefulWidget {
