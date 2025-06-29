@@ -40,6 +40,8 @@ class _PlaylistDetailScreenState extends State<PlaylistDetailScreen> {
       appBar: AppBar(
         title: Text(widget.playlist.name),
       ),
+      // The FutureBuilder is now the direct child of the body.
+      // The Scaffold provides the height boundaries it needs.
       body: FutureBuilder<Playlist>(
         future: _playlistDetailsFuture,
         builder: (context, snapshot) {
@@ -47,7 +49,9 @@ class _PlaylistDetailScreenState extends State<PlaylistDetailScreen> {
             return const Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
-          } else if (!snapshot.hasData || snapshot.data!.contents!.isEmpty) {
+          } else if (!snapshot.hasData ||
+              snapshot.data!.contents == null ||
+              snapshot.data!.contents!.isEmpty) {
             return const Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -77,18 +81,13 @@ class _PlaylistDetailScreenState extends State<PlaylistDetailScreen> {
           return ListView.builder(
             itemCount: playlist.contents!.length,
             itemBuilder: (context, index) {
-              return ListView.builder(
-                itemCount: playlist.contents!.length,
-                itemBuilder: (context, index) {
-                  final contentItem = playlist.contents![index];
-                  // Use our new, compact tile instead of the big card
-                  return PlaylistContentTile(content: contentItem);
-                },
-              );
+              final contentItem = playlist.contents![index];
+              return PlaylistContentTile(content: contentItem);
             },
           );
         },
       ),
+      // We don't have a create button here for now, so we can remove the FAB
     );
   }
 }
