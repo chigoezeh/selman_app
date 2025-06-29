@@ -173,4 +173,22 @@ class ApiService {
       throw Exception('Failed to load playlists.');
     }
   }
+
+  // Method to fetch a single playlist and its contents
+  Future<Playlist> fetchPlaylistDetails(int playlistId, String token) async {
+    final response = await http.get(
+      Uri.parse('$_baseUrl/playlists/$playlistId'),
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      // We need to update our Playlist model to handle the nested content
+      return Playlist.fromJson(jsonDecode(response.body));
+    } else {
+      throw Exception('Failed to load playlist details.');
+    }
+  }
 }
