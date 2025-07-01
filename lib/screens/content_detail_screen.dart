@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:selman/models/content.dart';
+import 'package:selman/widgets/favorite_button.dart';
 
 class ContentDetailScreen extends StatelessWidget {
   // This screen will receive a Content object.
@@ -37,12 +38,21 @@ class ContentDetailScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    content.title,
-                    style: Theme.of(context)
-                        .textTheme
-                        .headlineSmall
-                        ?.copyWith(fontWeight: FontWeight.bold),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          content.title,
+                          style: Theme.of(context)
+                              .textTheme
+                              .headlineSmall
+                              ?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      FavoriteButton(content: content),
+                    ],
                   ),
                   const SizedBox(height: 8),
                   Text(
