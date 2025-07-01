@@ -93,4 +93,27 @@ class AuthProvider with ChangeNotifier {
       rethrow;
     }
   }
+
+  Future<void> favoriteContent(int contentId) async {
+    if (_token == null) return; // Can't favorite if not logged in
+    try {
+      await _apiService.favoriteContent(contentId, _token!);
+      // Later, we'll update a local list of favorites here and call notifyListeners()
+      print('Successfully favorited content: $contentId');
+    } catch (e) {
+      print('Error favoriting content: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> unfavoriteContent(int contentId) async {
+    if (_token == null) return; // Can't unfavorite if not logged in
+    try {
+      await _apiService.unfavoriteContent(contentId, _token!);
+      print('Successfully unfavorited content: $contentId');
+    } catch (e) {
+      print('Error unfavoriting content: $e');
+      rethrow;
+    }
+  }
 }
