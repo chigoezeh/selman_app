@@ -137,7 +137,7 @@ class ApiService {
       headers: {
         'Content-Type': 'application/json; charset=UTF-8',
         'Accept': 'application/json',
-        'Authorization': 'Bearer $token', // <-- We must send the token!
+        'Authorization': 'Bearer $token',
       },
       body: jsonEncode(<String, String?>{
         'name': name,
@@ -160,7 +160,7 @@ class ApiService {
       Uri.parse('$_baseUrl/playlists'),
       headers: {
         'Accept': 'application/json',
-        'Authorization': 'Bearer $token', // We must send the token
+        'Authorization': 'Bearer $token',
       },
     );
 
@@ -189,6 +189,36 @@ class ApiService {
       return Playlist.fromJson(jsonDecode(response.body));
     } else {
       throw Exception('Failed to load playlist details.');
+    }
+  }
+
+  // Method to add a piece of content to favorites
+  Future<void> favoriteContent(int contentId, String token) async {
+    final response = await http.post(
+      Uri.parse('$_baseUrl/content/$contentId/favorite'),
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to add to favorites.');
+    }
+  }
+
+  // Method to remove a piece of content from favorites
+  Future<void> unfavoriteContent(int contentId, String token) async {
+    final response = await http.delete(
+      Uri.parse('$_baseUrl/content/$contentId/favorite'),
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to remove from favorites.');
     }
   }
 }
