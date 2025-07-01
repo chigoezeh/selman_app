@@ -66,4 +66,31 @@ class AuthProvider with ChangeNotifier {
     _user = null;
     notifyListeners();
   }
+
+  // We can add a list to hold playlists later
+  // List<Playlist> _playlists = [];
+  // List<Playlist> get playlists => _playlists;
+
+  Future<void> createPlaylist({
+    required String name,
+    String? description,
+  }) async {
+    if (_token == null) {
+      throw Exception('Not authenticated. Cannot create playlist.');
+    }
+
+    try {
+      final newPlaylist = await _apiService.createPlaylist(
+        name: name,
+        description: description,
+        token: _token!,
+      );
+      // For now, we'll just print a success message.
+      // Later, we would add the newPlaylist to a list to update the UI.
+      print('Successfully created playlist: ${newPlaylist.name}');
+    } catch (e) {
+      // Re-throw the exception so the UI can display the error.
+      rethrow;
+    }
+  }
 }

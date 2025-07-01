@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:selman/models/content.dart';
 import 'package:selman/models/user.dart';
+import 'package:selman/models/playlist.dart';
 
 class ApiService {
   // We use 10.0.2.2 because it is a special alias for the host machine's
@@ -122,6 +123,72 @@ class ApiService {
     if (response.statusCode != 200) {
       // It's okay if it fails, we'll log the user out on the client-side anyway
       print('Failed to logout on server: ${response.body}');
+    }
+  }
+
+  // Method to create a new playlist for the authenticated user
+  Future<Playlist> createPlaylist({
+    required String name,
+    String? description,
+    required String token,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$_baseUrl/playlists'),
+      headers: {
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token', // <-- We must send the token!
+      },
+      body: jsonEncode(<String, String?>{
+        'name': name,
+        'description': description,
+      }),
+    );
+
+    if (response.statusCode == 201) {
+      // If the playlist is created successfully, parse and return it.
+      return Playlist.fromJson(jsonDecode(response.body));
+    } else {
+      // If it fails, throw an error.
+      throw Exception('Failed to create playlist.');
+    }
+  }
+
+  // Method to fetch the playlists for the authenticated user
+  Future<List<Playlist>> fetchPlaylists(String token) async {
+    final response = await http.get(
+      Uri.parse('$_baseUrl/playlists'),
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token', // We must send the token
+      },
+    );
+
+    if (response.statusCode == 200) {
+      List<dynamic> body = jsonDecode(response.body);
+      List<Playlist> playlists =
+          body.map((dynamic item) => Playlist.fromJson(item)).toList();
+      return playlists;
+    } else {
+      throw Exception('Failed to load playlists.');
+    }
+  }
+
+  // Method to fetch a single playlist and its contents
+  Future<Playlist> fetchPlaylistDetails(int playlistId, String token) async {
+    final response = await http.get(
+      Uri.parse('$_baseUrl/playlists/$playlistId'),
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      // We need to update our Playlist model to handle the nested content
+      return Playlist.fromJson(jsonDecode(response.body));
+    } else {
+      throw Exception('Failed to load playlist details.');
     }
   }
 }
