@@ -2,11 +2,30 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:selman/providers/auth_provider.dart';
 import 'package:selman/screens/auth_wrapper.dart';
+import 'package:just_audio_background/just_audio_background.dart';
+import 'package:selman/services/audio_handler.dart';
 
-void main() {
+Future<void> main() async {
+  // Initialize the background audio service
+  await JustAudioBackground.init(
+    androidNotificationChannelId: 'com.ryanheise.bg_demo.channel.audio',
+    androidNotificationChannelName: 'Audio playback',
+    androidNotificationOngoing: true,
+  );
+
+  // Create our AudioHandler
+  final audioHandler = await AudioService.init(
+    builder: () => MyAudioHandler(),
+    config: const AudioServiceConfig(
+      androidNotificationChannelId: 'com.ryanheise.bg_demo.channel.audio',
+      androidNotificationChannelName: 'Audio playback',
+      androidNotificationOngoing: true,
+    ),
+  );
+
   runApp(
     ChangeNotifierProvider(
-      create: (context) => AuthProvider(),
+      create: (context) => AuthProvider(audioHandler),
       child: const MyApp(),
     ),
   );
