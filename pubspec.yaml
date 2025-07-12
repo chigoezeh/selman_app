@@ -38,6 +38,7 @@ dependencies:
   http: ^1.2.0
   provider: ^6.1.5
   just_audio: ^0.9.42
+  rxdart: ^0.28.0
 
 dev_dependencies:
   flutter_test:
