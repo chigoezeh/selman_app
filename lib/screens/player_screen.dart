@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:just_audio/just_audio.dart';
 import 'package:selman/models/content.dart';
 
 class PlayerScreen extends StatefulWidget {
@@ -10,7 +11,37 @@ class PlayerScreen extends StatefulWidget {
 }
 
 class _PlayerScreenState extends State<PlayerScreen> {
-  // We will initialize and control the audio player here later.
+  late AudioPlayer _player;
+
+  @override
+  void initState() {
+    super.initState();
+    _player = AudioPlayer();
+    _initPlayer();
+  }
+
+  Future<void> _initPlayer() async {
+    try {
+      // We'd make sure the URL is accessible from your emulator/device.
+      // Standard http might be blocked. Ensure usesCleartextTraffic="true" is in AndroidManifest.xml
+      await _player.setUrl(widget.content.media_url);
+      _player.play();
+    } catch (e) {
+      print("Error loading audio source: $e");
+      // Optionally, show a SnackBar or dialog to the user
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading audio: ${e.toString()}')),
+        );
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _player.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -97,13 +128,47 @@ class _PlayerScreenState extends State<PlayerScreen> {
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 IconButton(
-                    icon: const Icon(Icons.skip_previous, size: 40),
+                    icon: const Icon(Icons.skip_previous,
+                        size: 40, color: Colors.white),
                     onPressed: () {}),
+                StreamBuilder<PlayerState>(
+                  stream: _player.playerStateStream,
+                  builder: (context, snapshot) {
+                    final playerState = snapshot.data;
+                    final processingState = playerState?.processingState;
+                    final playing = playerState?.playing;
+
+                    if (processingState == ProcessingState.loading ||
+                        processingState == ProcessingState.buffering) {
+                      return const SizedBox(
+                        width: 70.0,
+                        height: 70.0,
+                        child: CircularProgressIndicator(color: Colors.white),
+                      );
+                    } else if (playing != true) {
+                      return IconButton(
+                        icon: const Icon(Icons.play_circle,
+                            color: Colors.white, size: 70),
+                        onPressed: _player.play,
+                      );
+                    } else if (processingState != ProcessingState.completed) {
+                      return IconButton(
+                        icon: const Icon(Icons.pause_circle,
+                            color: Colors.white, size: 70),
+                        onPressed: _player.pause,
+                      );
+                    } else {
+                      return IconButton(
+                        icon: const Icon(Icons.replay_circle_filled,
+                            color: Colors.white, size: 70),
+                        onPressed: () => _player.seek(Duration.zero),
+                      );
+                    }
+                  },
+                ),
                 IconButton(
-                    icon: const Icon(Icons.play_circle, size: 70),
-                    onPressed: () {}),
-                IconButton(
-                    icon: const Icon(Icons.skip_next, size: 40),
+                    icon: const Icon(Icons.skip_next,
+                        size: 40, color: Colors.white),
                     onPressed: () {}),
               ],
             ),
