@@ -4,6 +4,7 @@ import 'package:selman/providers/auth_provider.dart';
 import 'package:selman/screens/auth_wrapper.dart';
 import 'package:just_audio_background/just_audio_background.dart';
 import 'package:selman/services/audio_handler.dart';
+import 'package:audio_service/audio_service.dart';
 
 Future<void> main() async {
   // Initialize the background audio service
