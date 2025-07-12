@@ -122,19 +122,9 @@ class _PlayerScreenState extends State<PlayerScreen> {
                   ?.copyWith(color: Colors.grey[400]),
             ),
             const Spacer(),
-            // Placeholder for Progress Bar
-            Container(
-              height: 8,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: Colors.grey.withOpacity(0.3),
-                borderRadius: BorderRadius.circular(4),
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [Text('0:00'), Text('0:00')],
+            SeekBar(
+              positionDataStream: _positionDataStream,
+              onChangeEnd: _player.seek,
             ),
             const SizedBox(height: 16),
             // Player Controls
