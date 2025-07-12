@@ -24,7 +24,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
     try {
       // We'd make sure the URL is accessible from your emulator/device.
       // Standard http might be blocked. Ensure usesCleartextTraffic="true" is in AndroidManifest.xml
-      await _player.setUrl(widget.content.media_url);
+      await _player.setUrl(widget.content.mediaUrl);
       _player.play();
     } catch (e) {
       print("Error loading audio source: $e");
