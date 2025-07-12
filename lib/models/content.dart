@@ -12,6 +12,7 @@ class Content {
   final Category? category;
   final Minister? minister;
   final Organization? organization;
+  final bool isFavorited;
 
   Content({
     required this.id,
@@ -23,6 +24,7 @@ class Content {
     this.category,
     this.minister,
     this.organization,
+    this.isFavorited = false,
   });
 
   factory Content.fromJson(Map<String, dynamic> json) {
@@ -41,6 +43,7 @@ class Content {
       organization: json['organization'] != null
           ? Organization.fromJson(json['organization'])
           : null,
+      isFavorited: json['is_favorited'] ?? false,
     );
   }
 }
