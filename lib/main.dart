@@ -7,23 +7,28 @@ import 'package:selman/services/audio_handler.dart';
 import 'package:audio_service/audio_service.dart';
 
 Future<void> main() async {
-  // Initialize the background audio service
+  // Ensure Flutter is ready.
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize the display info for the background service (e.g., for notifications)
   await JustAudioBackground.init(
-    androidNotificationChannelId: 'com.ryanheise.bg_demo.channel.audio',
-    androidNotificationChannelName: 'Audio playback',
+    androidNotificationChannelId: 'com.selman.app.channel.audio',
+    androidNotificationChannelName: 'Audio Playback',
     androidNotificationOngoing: true,
   );
 
-  // Create our AudioHandler
+  // Now, we create our single audio handler instance.
+  // We will pass this ONE instance to both the app and the background service.
   final audioHandler = await AudioService.init(
     builder: () => MyAudioHandler(),
     config: const AudioServiceConfig(
-      androidNotificationChannelId: 'com.ryanheise.bg_demo.channel.audio',
-      androidNotificationChannelName: 'Audio playback',
+      androidNotificationChannelId: 'com.selman.app.channel.audio',
+      androidNotificationChannelName: 'Audio Playback',
       androidNotificationOngoing: true,
     ),
   );
 
+  // Finally, run the app, providing the single audio handler instance.
   runApp(
     ChangeNotifierProvider(
       create: (context) => AuthProvider(audioHandler),
