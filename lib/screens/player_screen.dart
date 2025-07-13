@@ -9,7 +9,14 @@ import 'package:selman/widgets/seek_bar.dart';
 
 class PlayerScreen extends StatefulWidget {
   final Content content;
-  const PlayerScreen({super.key, required this.content});
+  // This new flag tells the screen whether to start playing immediately.
+  final bool playNow;
+
+  const PlayerScreen({
+    super.key,
+    required this.content,
+    this.playNow = true, // Default to true
+  });
 
   @override
   State<PlayerScreen> createState() => _PlayerScreenState();
@@ -21,20 +28,21 @@ class _PlayerScreenState extends State<PlayerScreen> {
   @override
   void initState() {
     super.initState();
-    // Get the single audio handler instance from our provider
     _audioHandler = context.read<AuthProvider>().audioHandler;
-    // Start playing the new track
-    _playSelectedItem();
+
+    // Only start playing the track if playNow is true.
+    if (widget.playNow) {
+      _playSelectedItem();
+    }
   }
 
-  // Tell the handler to play the content passed to this screen
   void _playSelectedItem() {
     final mediaItem = MediaItem(
       id: widget.content.mediaUrl,
       title: widget.content.title,
       artist: widget.content.minister?.name ?? 'Unknown Artist',
-      artUri: Uri.parse(widget.content.thumbnailUrl ??
-          'https://i.imgur.com/4k3a2Y2.png'), // Using a placeholder
+      artUri: Uri.parse(
+          widget.content.thumbnailUrl ?? 'https://i.imgur.com/4k3a2Y2.png'),
     );
     _audioHandler.playMediaItem(mediaItem);
   }
@@ -58,6 +66,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // The rest of the build method is identical to before.
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -77,7 +86,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Spacer(),
-            // We can now use the real album art URI
             StreamBuilder<MediaItem?>(
                 stream: _audioHandler.mediaItem,
                 builder: (context, snapshot) {
@@ -109,7 +117,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
                   );
                 }),
             const SizedBox(height: 32),
-            // Track Title and Artist
             StreamBuilder<MediaItem?>(
                 stream: _audioHandler.mediaItem,
                 builder: (context, snapshot) {
@@ -138,13 +145,11 @@ class _PlayerScreenState extends State<PlayerScreen> {
                   );
                 }),
             const Spacer(),
-            // Functional Seek Bar
             SeekBar(
               positionDataStream: _positionDataStream,
               onChangeEnd: _audioHandler.seek,
             ),
             const SizedBox(height: 16),
-            // Functional Player Controls
             StreamBuilder<PlaybackState>(
               stream: _audioHandler.playbackState,
               builder: (context, snapshot) {
