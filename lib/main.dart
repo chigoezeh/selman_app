@@ -3,34 +3,24 @@ import 'package:provider/provider.dart';
 import 'package:selman/providers/auth_provider.dart';
 import 'package:selman/screens/auth_wrapper.dart';
 import 'package:audio_service/audio_service.dart';
-import 'package:just_audio_background/just_audio_background.dart';
 import 'package:selman/services/audio_handler.dart';
 
-// This is our single, app-wide instance of the Audio Handler.
 late MyAudioHandler _audioHandler;
 
 Future<void> main() async {
-  // Ensure Flutter is ready.
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize the display info for the background service (notifications)
-  await JustAudioBackground.init(
-    androidNotificationChannelId: 'com.selman.app.channel.audio',
-    androidNotificationChannelName: 'Audio Playback',
-    androidNotificationOngoing: true,
-  );
-
-  // Create our single audio handler instance.
+  // Initialize AudioService ONLY
   _audioHandler = await AudioService.init(
     builder: () => MyAudioHandler(),
     config: const AudioServiceConfig(
       androidNotificationChannelId: 'com.selman.app.channel.audio',
       androidNotificationChannelName: 'Audio Playback',
       androidNotificationOngoing: true,
+      androidStopForegroundOnPause: true,
     ),
   );
 
-  // Run the app.
   runApp(
     ChangeNotifierProvider(
       create: (context) => AuthProvider(_audioHandler),
