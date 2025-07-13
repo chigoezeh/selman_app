@@ -6,6 +6,7 @@ class Content {
   final int id;
   final String title;
   final String? description;
+  final String? thumbnailUrl;
   final String mediaType;
   final String mediaUrl;
   final int durationInSeconds;
@@ -18,6 +19,7 @@ class Content {
     required this.id,
     required this.title,
     this.description,
+    this.thumbnailUrl,
     required this.mediaType,
     required this.mediaUrl,
     required this.durationInSeconds,
@@ -32,10 +34,10 @@ class Content {
       id: json['id'],
       title: json['title'],
       description: json['description'],
+      thumbnailUrl: json['thumbnail_url'],
       mediaType: json['media_type'],
       mediaUrl: json['media_url'],
       durationInSeconds: json['duration_in_seconds'],
-      // We now check if 'category' is null before trying to parse it.
       category:
           json['category'] != null ? Category.fromJson(json['category']) : null,
       minister:

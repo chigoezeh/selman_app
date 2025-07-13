@@ -1,7 +1,10 @@
+import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
-import 'package:just_audio/just_audio.dart';
-import 'package:selman/models/content.dart';
+import 'package:provider/provider.dart';
 import 'package:rxdart/rxdart.dart';
+import 'package:selman/models/content.dart';
+import 'package:selman/providers/auth_provider.dart';
+import 'package:selman/services/audio_handler.dart';
 import 'package:selman/widgets/seek_bar.dart';
 
 class PlayerScreen extends StatefulWidget {
@@ -13,13 +16,39 @@ class PlayerScreen extends StatefulWidget {
 }
 
 class _PlayerScreenState extends State<PlayerScreen> {
-  late AudioPlayer _player;
+  late MyAudioHandler _audioHandler;
 
+  @override
+  void initState() {
+    super.initState();
+    // Get the single audio handler instance from our provider
+    _audioHandler = context.read<AuthProvider>().audioHandler;
+    // Start playing the new track
+    _playSelectedItem();
+  }
+
+  // Tell the handler to play the content passed to this screen
+  void _playSelectedItem() {
+    final mediaItem = MediaItem(
+      id: widget.content.mediaUrl,
+      title: widget.content.title,
+      artist: widget.content.minister?.name ?? 'Unknown Artist',
+      artUri: Uri.parse(widget.content.thumbnailUrl ??
+          'https://i.imgur.com/4k3a2Y2.png'), // Using a placeholder
+    );
+    _audioHandler.playMediaItem(mediaItem);
+  }
+
+  // Combine the multiple streams from the handler for our SeekBar
   Stream<PositionData> get _positionDataStream =>
       Rx.combineLatest3<Duration, Duration, Duration?, PositionData>(
-        _player.positionStream,
-        _player.bufferedPositionStream,
-        _player.durationStream,
+        _audioHandler.playbackState
+            .map((state) => state.updatePosition)
+            .distinct(),
+        _audioHandler.playbackState
+            .map((state) => state.bufferedPosition)
+            .distinct(),
+        _audioHandler.mediaItem.map((item) => item?.duration).distinct(),
         (position, bufferedPosition, duration) => PositionData(
           position,
           bufferedPosition,
@@ -28,40 +57,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
       );
 
   @override
-  void initState() {
-    super.initState();
-    _player = AudioPlayer();
-    _initPlayer();
-  }
-
-  Future<void> _initPlayer() async {
-    try {
-      // We'd make sure the URL is accessible from your emulator/device.
-      // Standard http might be blocked. Ensure usesCleartextTraffic="true" is in AndroidManifest.xml
-      await _player.setUrl(widget.content.mediaUrl);
-      _player.play();
-    } catch (e) {
-      print("Error loading audio source: $e");
-      // Optionally, show a SnackBar or dialog to the user
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading audio: ${e.toString()}')),
-        );
-      }
-    }
-  }
-
-  @override
-  void dispose() {
-    _player.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
-    final screenWidth = MediaQuery.of(context).size.width;
-
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -70,8 +66,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
       extendBodyBehindAppBar: true,
       body: Container(
         padding: const EdgeInsets.all(20.0),
-        height: screenHeight,
-        width: screenWidth,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
@@ -83,98 +77,104 @@ class _PlayerScreenState extends State<PlayerScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Spacer(),
-            // Placeholder for Album Art
-            Container(
-              width: screenWidth * 0.75,
-              height: screenWidth * 0.75,
-              decoration: BoxDecoration(
-                color: Colors.grey[800],
-                borderRadius: BorderRadius.circular(12.0),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Colors.black26,
-                    offset: Offset(0, 8),
-                    blurRadius: 16,
-                  )
-                ],
-              ),
-              child: const Icon(Icons.music_note,
-                  size: 100, color: Colors.white54),
-            ),
+            // We can now use the real album art URI
+            StreamBuilder<MediaItem?>(
+                stream: _audioHandler.mediaItem,
+                builder: (context, snapshot) {
+                  final artUri = snapshot.data?.artUri;
+                  return Container(
+                    width: MediaQuery.of(context).size.width * 0.75,
+                    height: MediaQuery.of(context).size.width * 0.75,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[800],
+                      borderRadius: BorderRadius.circular(12.0),
+                      image: artUri != null
+                          ? DecorationImage(
+                              image: NetworkImage(artUri.toString()),
+                              fit: BoxFit.cover,
+                            )
+                          : null,
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Colors.black26,
+                          offset: Offset(0, 8),
+                          blurRadius: 16,
+                        )
+                      ],
+                    ),
+                    child: artUri == null
+                        ? const Icon(Icons.music_note,
+                            size: 100, color: Colors.white54)
+                        : null,
+                  );
+                }),
             const SizedBox(height: 32),
             // Track Title and Artist
-            Text(
-              widget.content.title,
-              style: Theme.of(context)
-                  .textTheme
-                  .headlineSmall
-                  ?.copyWith(fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              widget.content.minister?.name ?? 'Unknown Artist',
-              style: Theme.of(context)
-                  .textTheme
-                  .titleMedium
-                  ?.copyWith(color: Colors.grey[400]),
-            ),
+            StreamBuilder<MediaItem?>(
+                stream: _audioHandler.mediaItem,
+                builder: (context, snapshot) {
+                  final mediaItem = snapshot.data;
+                  return Column(
+                    children: [
+                      Text(
+                        mediaItem?.title ?? widget.content.title,
+                        style: Theme.of(context)
+                            .textTheme
+                            .headlineSmall
+                            ?.copyWith(fontWeight: FontWeight.bold),
+                        textAlign: TextAlign.center,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        mediaItem?.artist ?? 'Unknown Artist',
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleMedium
+                            ?.copyWith(color: Colors.grey[400]),
+                      ),
+                    ],
+                  );
+                }),
             const Spacer(),
+            // Functional Seek Bar
             SeekBar(
               positionDataStream: _positionDataStream,
-              onChangeEnd: _player.seek,
+              onChangeEnd: _audioHandler.seek,
             ),
             const SizedBox(height: 16),
-            // Player Controls
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                IconButton(
-                    icon: const Icon(Icons.skip_previous,
-                        size: 40, color: Colors.white),
-                    onPressed: () {}),
-                StreamBuilder<PlayerState>(
-                  stream: _player.playerStateStream,
-                  builder: (context, snapshot) {
-                    final playerState = snapshot.data;
-                    final processingState = playerState?.processingState;
-                    final playing = playerState?.playing;
+            // Functional Player Controls
+            StreamBuilder<PlaybackState>(
+              stream: _audioHandler.playbackState,
+              builder: (context, snapshot) {
+                final playbackState = snapshot.data;
+                final processingState = playbackState?.processingState;
+                final playing = playbackState?.playing;
 
-                    if (processingState == ProcessingState.loading ||
-                        processingState == ProcessingState.buffering) {
-                      return const SizedBox(
-                        width: 70.0,
-                        height: 70.0,
-                        child: CircularProgressIndicator(color: Colors.white),
-                      );
-                    } else if (playing != true) {
-                      return IconButton(
-                        icon: const Icon(Icons.play_circle,
-                            color: Colors.white, size: 70),
-                        onPressed: _player.play,
-                      );
-                    } else if (processingState != ProcessingState.completed) {
-                      return IconButton(
-                        icon: const Icon(Icons.pause_circle,
-                            color: Colors.white, size: 70),
-                        onPressed: _player.pause,
-                      );
-                    } else {
-                      return IconButton(
-                        icon: const Icon(Icons.replay_circle_filled,
-                            color: Colors.white, size: 70),
-                        onPressed: () => _player.seek(Duration.zero),
-                      );
-                    }
-                  },
-                ),
-                IconButton(
-                    icon: const Icon(Icons.skip_next,
-                        size: 40, color: Colors.white),
-                    onPressed: () {}),
-              ],
+                if (processingState == AudioProcessingState.loading ||
+                    processingState == AudioProcessingState.buffering) {
+                  return const SizedBox(
+                      width: 70.0,
+                      height: 70.0,
+                      child: CircularProgressIndicator(color: Colors.white));
+                } else if (playing != true) {
+                  return IconButton(
+                      icon: const Icon(Icons.play_circle,
+                          color: Colors.white, size: 70),
+                      onPressed: _audioHandler.play);
+                } else if (processingState != AudioProcessingState.completed) {
+                  return IconButton(
+                      icon: const Icon(Icons.pause_circle,
+                          color: Colors.white, size: 70),
+                      onPressed: _audioHandler.pause);
+                } else {
+                  return IconButton(
+                      icon: const Icon(Icons.replay_circle_filled,
+                          color: Colors.white, size: 70),
+                      onPressed: () => _audioHandler.seek(Duration.zero));
+                }
+              },
             ),
             const Spacer(),
           ],
