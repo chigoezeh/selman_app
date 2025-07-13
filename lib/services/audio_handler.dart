@@ -1,5 +1,6 @@
 import 'package:audio_service/audio_service.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:just_audio_background/just_audio_background.dart';
 
 // This is the main background audio handler class
 class MyAudioHandler extends BaseAudioHandler with SeekHandler {
@@ -16,12 +17,17 @@ class MyAudioHandler extends BaseAudioHandler with SeekHandler {
     // Tell the UI and the system what we're playing
     this.mediaItem.add(mediaItem);
     try {
-      await _player.setUrl(mediaItem.id); // The mediaItem.id will be our URL
+      // The mediaItem.id is our URL. just_audio_background uses this ID
+      // to find the URL and other metadata for the notification.
+      await _player.setAudioSource(AudioSource.uri(Uri.parse(mediaItem.id)));
       play();
     } catch (e) {
       print("Error playing media item: $e");
     }
   }
+
+  // We also need to update our PlayerScreen to pass a proper MediaItem.
+  // We will do that after this fix is confirmed working.
 
   @override
   Future<void> play() => _player.play();
@@ -33,7 +39,10 @@ class MyAudioHandler extends BaseAudioHandler with SeekHandler {
   Future<void> seek(Duration position) => _player.seek(position);
 
   @override
-  Future<void> stop() => _player.stop();
+  Future<void> stop() async {
+    await _player.stop();
+    await super.stop();
+  }
 
   // Helper method to transform just_audio events into audio_service states
   PlaybackState _transformEvent(PlaybackEvent event) {
