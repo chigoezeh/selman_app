@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:selman/providers/auth_provider.dart';
 import 'package:selman/screens/home_screen.dart';
 import 'package:selman/screens/library_screen.dart';
 import 'package:selman/screens/search_screen.dart';
+import 'package:selman/widgets/mini_player.dart';
 
 class MainAppShell extends StatefulWidget {
   const MainAppShell({super.key});
@@ -11,9 +14,8 @@ class MainAppShell extends StatefulWidget {
 }
 
 class _MainAppShellState extends State<MainAppShell> {
-  int _selectedIndex = 0; // The index of the currently selected tab
+  int _selectedIndex = 0;
 
-  // The list of screens to navigate between
   static const List<Widget> _widgetOptions = <Widget>[
     ContentListScreen(),
     SearchScreen(),
@@ -28,20 +30,26 @@ class _MainAppShellState extends State<MainAppShell> {
 
   @override
   Widget build(BuildContext context) {
+    // Get the audio handler from the provider
+    final audioHandler = context.watch<AuthProvider>().audioHandler;
+
     return Scaffold(
-      body: Center(
-        child: _widgetOptions.elementAt(_selectedIndex),
+      // The body is now a Column containing the main screen and the mini player
+      body: Column(
+        children: [
+          Expanded(
+            child: Center(
+              child: _widgetOptions.elementAt(_selectedIndex),
+            ),
+          ),
+          // The MiniPlayer is placed here, outside the main screen content
+          MiniPlayer(audioHandler: audioHandler),
+        ],
       ),
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.search),
-            label: 'Search',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
           BottomNavigationBarItem(
             icon: Icon(Icons.video_library),
             label: 'Library',
@@ -49,7 +57,6 @@ class _MainAppShellState extends State<MainAppShell> {
         ],
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
-        // Theming for the navigation bar
         backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         selectedItemColor: Theme.of(context).colorScheme.primary,
         unselectedItemColor: Colors.grey,
