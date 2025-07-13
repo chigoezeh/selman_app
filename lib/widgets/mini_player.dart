@@ -3,6 +3,7 @@ import 'package:audio_service/audio_service.dart';
 import 'package:selman/screens/player_screen.dart';
 import 'package:selman/services/audio_handler.dart';
 import 'package:selman/models/content.dart';
+import 'package:selman/models/minister.dart';
 
 class MiniPlayer extends StatelessWidget {
   final MyAudioHandler audioHandler;
@@ -15,26 +16,30 @@ class MiniPlayer extends StatelessWidget {
       stream: audioHandler.mediaItem,
       builder: (context, snapshot) {
         final mediaItem = snapshot.data;
-        // If there's no media item, show nothing
-        if (mediaItem == null) {
+        // If there's no media item or the player is stopped, show nothing
+        final isPlaying =
+            snapshot.data != null && audioHandler.playbackState.value.playing;
+        final isStopped = snapshot.data == null;
+
+        if (isStopped) {
           return const SizedBox.shrink();
         }
 
         return GestureDetector(
           onTap: () {
-            // This is a bit of a trick. The full content object isn't in the MediaItem.
-            // We need to pass a dummy Content object for now.
-            // A better solution would involve a global state for the current track.
+            // This creates a temporary Content object to pass to the PlayerScreen.
+            // It's needed because the MediaItem doesn't hold all our custom fields.
             Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (context) => PlayerScreen(
                   content: Content(
                     id: 0, // Dummy data
-                    title: mediaItem.title,
+                    title: mediaItem!.title,
                     mediaUrl: mediaItem.id,
-                    minister: Minister(
-                        id: 0, name: mediaItem.artist ?? '...'), // Dummy data
+                    mediaType: 'audio', // Dummy data
+                    durationInSeconds: mediaItem.duration?.inSeconds ?? 0,
+                    minister: Minister(id: 0, name: mediaItem.artist ?? '...'),
                   ),
                 ),
               ),
@@ -50,7 +55,7 @@ class MiniPlayer extends StatelessWidget {
                   width: 70,
                   height: 70,
                   color: Colors.deepPurple,
-                  child: mediaItem.artUri != null
+                  child: mediaItem!.artUri != null
                       ? Image.network(mediaItem.artUri.toString(),
                           fit: BoxFit.cover)
                       : const Icon(Icons.music_note, color: Colors.white70),
