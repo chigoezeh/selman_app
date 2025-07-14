@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:selman/models/content.dart';
+import 'package:selman/models/playlist.dart';
 import 'package:selman/models/user.dart';
 import 'package:selman/services/api_service.dart';
 import 'package:selman/services/audio_handler.dart';
@@ -13,18 +15,21 @@ class AuthProvider with ChangeNotifier {
   bool _isAuthenticated = false;
   String? _token;
   User? _user;
+  List<Playlist> _playlists = [];
+  List<Content> _favorites = [];
 
   // Public getters to access the state from the UI
   bool get isAuthenticated => _isAuthenticated;
   String? get token => _token;
   User? get user => _user;
+  List<Playlist> get playlists => _playlists;
+  List<Content> get favorites => _favorites;
 
   Future<void> login(String email, String password) async {
     try {
       final token = await _apiService.login(email, password);
       _token = token;
 
-      // After getting the token, fetch the user's data
       final user = await _apiService.fetchUser(_token!);
       _user = user;
 
@@ -48,7 +53,6 @@ class AuthProvider with ChangeNotifier {
         password: password,
         passwordConfirmation: passwordConfirmation,
       );
-      // After successful registration, we can automatically log the user in.
       await login(email, password);
     } catch (e) {
       rethrow;
@@ -60,7 +64,6 @@ class AuthProvider with ChangeNotifier {
       try {
         await _apiService.logout(_token!);
       } catch (e) {
-        // Handle potential errors if the server can't be reached
         print('Error logging out from server: $e');
       }
     }
@@ -68,12 +71,30 @@ class AuthProvider with ChangeNotifier {
     _isAuthenticated = false;
     _token = null;
     _user = null;
+    _playlists = []; // Clear playlists on logout
+    _favorites = []; // Clear favorites on logout
     notifyListeners();
   }
 
-  // We can add a list to hold playlists later
-  // List<Playlist> _playlists = [];
-  // List<Playlist> get playlists => _playlists;
+  Future<void> fetchMyPlaylists() async {
+    if (_token == null) return;
+    try {
+      _playlists = await _apiService.fetchPlaylists(_token!);
+      notifyListeners();
+    } catch (e) {
+      print('Error fetching playlists: $e');
+    }
+  }
+
+  Future<void> fetchMyFavorites() async {
+    if (_token == null) return;
+    try {
+      _favorites = await _apiService.fetchFavorites(_token!);
+      notifyListeners();
+    } catch (e) {
+      print('Error fetching favorites: $e');
+    }
+  }
 
   Future<void> createPlaylist({
     required String name,
@@ -89,21 +110,20 @@ class AuthProvider with ChangeNotifier {
         description: description,
         token: _token!,
       );
-      // For now, we'll just print a success message.
-      // Later, we would add the newPlaylist to a list to update the UI.
-      print('Successfully created playlist: ${newPlaylist.name}');
+      _playlists.add(newPlaylist);
+      notifyListeners(); // Update UI
     } catch (e) {
-      // Re-throw the exception so the UI can display the error.
       rethrow;
     }
   }
 
   Future<void> favoriteContent(int contentId) async {
-    if (_token == null) return; // Can't favorite if not logged in
+    if (_token == null) return;
     try {
       await _apiService.favoriteContent(contentId, _token!);
-      // Later, we'll update a local list of favorites here and call notifyListeners()
-      print('Successfully favorited content: $contentId');
+      // For a better user experience, we can immediately update the local list
+      // or simply refetch the list from the server. Let's refetch for simplicity.
+      fetchMyFavorites();
     } catch (e) {
       print('Error favoriting content: $e');
       rethrow;
@@ -111,10 +131,10 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<void> unfavoriteContent(int contentId) async {
-    if (_token == null) return; // Can't unfavorite if not logged in
+    if (_token == null) return;
     try {
       await _apiService.unfavoriteContent(contentId, _token!);
-      print('Successfully unfavorited content: $contentId');
+      fetchMyFavorites();
     } catch (e) {
       print('Error unfavoriting content: $e');
       rethrow;

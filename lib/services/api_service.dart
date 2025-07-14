@@ -221,4 +221,22 @@ class ApiService {
       throw Exception('Failed to remove from favorites.');
     }
   }
+
+  // Method to fetch the user's favorited content
+  Future<List<Content>> fetchFavorites(String token) async {
+    final response = await http.get(
+      Uri.parse('$_baseUrl/favorites'),
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      List<dynamic> body = jsonDecode(response.body);
+      return body.map((dynamic item) => Content.fromJson(item)).toList();
+    } else {
+      throw Exception('Failed to load favorites.');
+    }
+  }
 }
