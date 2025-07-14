@@ -56,13 +56,13 @@ class MyAudioHandler extends BaseAudioHandler with SeekHandler {
   @override
   Future<void> play() {
     _startProgressTimer();
-    return super.play();
+    return _player.play();
   }
 
   @override
   Future<void> pause() {
     _stopProgressTimer();
-    return super.pause();
+    return _player.pause();
   }
 
   @override
