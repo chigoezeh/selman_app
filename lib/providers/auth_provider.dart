@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:selman/models/user.dart';
 import 'package:selman/services/api_service.dart';
+import 'package:selman/services/audio_handler.dart';
 
 // The AuthProvider extends ChangeNotifier, which allows it to notify listeners of changes.
 class AuthProvider with ChangeNotifier {
   final ApiService _apiService = ApiService();
+  final MyAudioHandler audioHandler;
+
+  AuthProvider(this.audioHandler);
 
   bool _isAuthenticated = false;
   String? _token;

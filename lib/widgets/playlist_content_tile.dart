@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:selman/models/content.dart';
+import 'package:selman/screens/player_screen.dart';
 
 class PlaylistContentTile extends StatelessWidget {
   final Content content;
@@ -36,7 +37,12 @@ class PlaylistContentTile extends StatelessWidget {
         },
       ),
       onTap: () {
-        // Logic to play the content will go here
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => PlayerScreen(content: content),
+          ),
+        );
       },
     );
   }
