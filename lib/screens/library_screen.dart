@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:selman/models/playlist.dart';
 import 'package:selman/providers/auth_provider.dart';
-import 'package:selman/services/api_service.dart';
 import 'package:selman/screens/playlist_detail_screen.dart';
+import 'package:selman/widgets/playlist_content_tile.dart';
 
 class LibraryScreen extends StatefulWidget {
   const LibraryScreen({super.key});
@@ -13,155 +12,146 @@ class LibraryScreen extends StatefulWidget {
 }
 
 class _LibraryScreenState extends State<LibraryScreen> {
-  final ApiService _apiService = ApiService();
-  Future<List<Playlist>>? _playlistsFuture;
-
   @override
   void initState() {
     super.initState();
-    // We need the token to fetch playlists, so we get it from our AuthProvider
+    // Fetch both playlists and favorites when the screen is first loaded
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    if (authProvider.isAuthenticated && authProvider.token != null) {
-      _playlistsFuture = _apiService.fetchPlaylists(authProvider.token!);
-    }
+    authProvider.fetchMyPlaylists();
+    authProvider.fetchMyFavorites();
   }
 
-  // This function will show the dialog for creating a new playlist.
   void _showCreatePlaylistDialog(BuildContext context) {
     final formKey = GlobalKey<FormState>();
     final nameController = TextEditingController();
     final descriptionController = TextEditingController();
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
-    // Capture context-dependent variables BEFORE the async gap.
-    final scaffoldMessenger = ScaffoldMessenger.of(context);
-    final theme = Theme.of(context);
-    final navigator = Navigator.of(context);
-
     showDialog(
-      context: context,
-      builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          title: const Text('New Playlist'),
-          content: Form(
-            key: formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  controller: nameController,
-                  decoration: const InputDecoration(labelText: 'Playlist Name'),
-                  validator: (value) => value == null || value.isEmpty
-                      ? 'Please enter a name'
-                      : null,
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+              title: const Text('New Playlist'),
+              content: Form(
+                key: formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextFormField(
+                      controller: nameController,
+                      decoration:
+                          const InputDecoration(labelText: 'Playlist Name'),
+                      validator: (value) => value == null || value.isEmpty
+                          ? 'Please enter a name'
+                          : null,
+                    ),
+                    TextFormField(
+                      controller: descriptionController,
+                      decoration: const InputDecoration(
+                          labelText: 'Description (Optional)'),
+                    ),
+                  ],
                 ),
-                TextFormField(
-                  controller: descriptionController,
-                  decoration: const InputDecoration(
-                      labelText: 'Description (Optional)'),
+              ),
+              actions: [
+                TextButton(
+                  child: const Text('Cancel'),
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                ),
+                ElevatedButton(
+                  child: const Text('Create'),
+                  onPressed: () async {
+                    if (formKey.currentState?.validate() ?? false) {
+                      try {
+                        await authProvider.createPlaylist(
+                          name: nameController.text,
+                          description: descriptionController.text,
+                        );
+                        if (mounted) Navigator.of(dialogContext).pop();
+                        // Refresh the playlists list after creating a new one
+                        authProvider.fetchMyPlaylists();
+                      } catch (error) {
+                        // Handle error
+                      }
+                    }
+                  },
                 ),
               ],
+            ));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Use a Consumer to get the latest data from our provider
+    return Consumer<AuthProvider>(
+      builder: (context, authProvider, child) {
+        return DefaultTabController(
+          length: 2,
+          child: Scaffold(
+            appBar: AppBar(
+              title: const Text('My Library'),
+              bottom: const TabBar(
+                tabs: [
+                  Tab(text: 'Playlists'),
+                  Tab(text: 'Favorites'),
+                ],
+              ),
+            ),
+            body: TabBarView(
+              children: [
+                // --- Playlists Tab View ---
+                _buildPlaylistsView(authProvider),
+                // --- Favorites Tab View ---
+                _buildFavoritesView(authProvider),
+              ],
+            ),
+            floatingActionButton: FloatingActionButton(
+              onPressed: () => _showCreatePlaylistDialog(context),
+              tooltip: 'Create Playlist',
+              child: const Icon(Icons.add),
             ),
           ),
-          actions: [
-            TextButton(
-              child: const Text('Cancel'),
-              onPressed: () {
-                Navigator.of(dialogContext).pop();
-              },
-            ),
-            ElevatedButton(
-              child: const Text('Create'),
-              onPressed: () async {
-                if (formKey.currentState?.validate() ?? false) {
-                  // This is the beginning of the async gap
-                  try {
-                    await authProvider.createPlaylist(
-                      name: nameController.text,
-                      description: descriptionController.text,
-                    );
-
-                    // Check if the widget is still mounted AFTER the async gap.
-                    if (!mounted) return;
-
-                    navigator
-                        .pop(); // Close the dialog using the captured navigator
-
-                    scaffoldMessenger.showSnackBar(
-                      // Use the captured scaffoldMessenger
-                      const SnackBar(
-                        content: Text('Playlist created successfully!'),
-                        backgroundColor: Colors.green,
-                      ),
-                    );
-                  } catch (error) {
-                    if (!mounted) return;
-
-                    scaffoldMessenger.showSnackBar(
-                      SnackBar(
-                        content: Text(
-                            'Error: ${error.toString().replaceFirst('Exception: ', '')}'),
-                        backgroundColor:
-                            theme.colorScheme.error, // Use the captured theme
-                      ),
-                    );
-                  }
-                }
-              },
-            ),
-          ],
         );
       },
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('My Library'),
-      ),
-      body: FutureBuilder<List<Playlist>>(
-        future: _playlistsFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          } else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
-            final playlists = snapshot.data!;
-            return ListView.builder(
-              itemCount: playlists.length,
-              itemBuilder: (context, index) {
-                final playlist = playlists[index];
-                return ListTile(
-                  leading: const Icon(Icons.queue_music),
-                  title: Text(playlist.name),
-                  subtitle: Text(playlist.description ?? 'No description'),
-                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            PlaylistDetailScreen(playlist: playlist),
-                      ),
-                    );
-                  },
-                );
-              },
-            );
-          } else {
-            return const Center(
-                child: Text('You haven\'t created any playlists yet.'));
-          }
-        },
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showCreatePlaylistDialog(context),
-        tooltip: 'Create Playlist',
-        child: const Icon(Icons.add),
-      ),
+  // Helper widget for the Playlists tab
+  Widget _buildPlaylistsView(AuthProvider authProvider) {
+    if (authProvider.playlists.isEmpty) {
+      return const Center(
+          child: Text('You haven\'t created any playlists yet.'));
+    }
+    return ListView.builder(
+      itemCount: authProvider.playlists.length,
+      itemBuilder: (context, index) {
+        final playlist = authProvider.playlists[index];
+        return ListTile(
+          leading: const Icon(Icons.queue_music),
+          title: Text(playlist.name),
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => PlaylistDetailScreen(playlist: playlist),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // Helper widget for the Favorites tab
+  Widget _buildFavoritesView(AuthProvider authProvider) {
+    if (authProvider.favorites.isEmpty) {
+      return const Center(
+          child: Text('You haven\'t favorited any content yet.'));
+    }
+    // We can reuse the compact tile we made for playlist contents!
+    return ListView.builder(
+      itemCount: authProvider.favorites.length,
+      itemBuilder: (context, index) {
+        final contentItem = authProvider.favorites[index];
+        return PlaylistContentTile(content: contentItem);
+      },
     );
   }
 }
