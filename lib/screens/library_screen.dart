@@ -102,6 +102,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
               title: const Text('My Library'),
               bottom: const TabBar(
                 indicatorColor: Colors.deepPurple,
+                dividerColor: Colors.transparent,
                 tabs: [
                   Tab(text: 'Playlists'),
                   Tab(text: 'Favorites'),
