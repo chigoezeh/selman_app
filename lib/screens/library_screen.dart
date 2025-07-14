@@ -26,57 +26,68 @@ class _LibraryScreenState extends State<LibraryScreen> {
     final nameController = TextEditingController();
     final descriptionController = TextEditingController();
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final scaffoldMessenger =
+        ScaffoldMessenger.of(context); // Capture ScaffoldMessenger
 
     showDialog(
         context: context,
-        builder: (dialogContext) => AlertDialog(
-              title: const Text('New Playlist'),
-              content: Form(
-                key: formKey,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextFormField(
-                      controller: nameController,
-                      decoration:
-                          const InputDecoration(labelText: 'Playlist Name'),
-                      validator: (value) => value == null || value.isEmpty
-                          ? 'Please enter a name'
-                          : null,
-                    ),
-                    TextFormField(
-                      controller: descriptionController,
-                      decoration: const InputDecoration(
-                          labelText: 'Description (Optional)'),
-                    ),
-                  ],
-                ),
+        builder: (dialogContext) {
+          // Capture the navigator from the dialog's context before the async gap
+          final dialogNavigator = Navigator.of(dialogContext);
+
+          return AlertDialog(
+            title: const Text('New Playlist'),
+            content: Form(
+              key: formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextFormField(
+                    controller: nameController,
+                    decoration:
+                        const InputDecoration(labelText: 'Playlist Name'),
+                    validator: (value) => value == null || value.isEmpty
+                        ? 'Please enter a name'
+                        : null,
+                  ),
+                  TextFormField(
+                    controller: descriptionController,
+                    decoration: const InputDecoration(
+                        labelText: 'Description (Optional)'),
+                  ),
+                ],
               ),
-              actions: [
-                TextButton(
-                  child: const Text('Cancel'),
-                  onPressed: () => Navigator.of(dialogContext).pop(),
-                ),
-                ElevatedButton(
-                  child: const Text('Create'),
-                  onPressed: () async {
-                    if (formKey.currentState?.validate() ?? false) {
-                      try {
-                        await authProvider.createPlaylist(
-                          name: nameController.text,
-                          description: descriptionController.text,
-                        );
-                        if (mounted) Navigator.of(dialogContext).pop();
-                        // Refresh the playlists list after creating a new one
-                        authProvider.fetchMyPlaylists();
-                      } catch (error) {
-                        // Handle error
+            ),
+            actions: [
+              TextButton(
+                child: const Text('Cancel'),
+                onPressed: () => dialogNavigator.pop(),
+              ),
+              ElevatedButton(
+                child: const Text('Create'),
+                onPressed: () async {
+                  if (formKey.currentState?.validate() ?? false) {
+                    try {
+                      await authProvider.createPlaylist(
+                        name: nameController.text,
+                        description: descriptionController.text,
+                      );
+
+                      // Use the captured navigator after the await
+                      dialogNavigator.pop();
+                    } catch (error) {
+                      // Handle error
+                      if (mounted) {
+                        scaffoldMessenger.showSnackBar(SnackBar(
+                            content: Text('Error: ${error.toString()}')));
                       }
                     }
-                  },
-                ),
-              ],
-            ));
+                  }
+                },
+              ),
+            ],
+          );
+        });
   }
 
   @override
@@ -90,6 +101,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
             appBar: AppBar(
               title: const Text('My Library'),
               bottom: const TabBar(
+                indicatorColor: Colors.deepPurple,
                 tabs: [
                   Tab(text: 'Playlists'),
                   Tab(text: 'Favorites'),
