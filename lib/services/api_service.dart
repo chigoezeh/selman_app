@@ -261,4 +261,31 @@ class ApiService {
       throw Exception('Failed to perform search.');
     }
   }
+
+  // Method to sync playback progress
+  Future<void> syncProgress({
+    required int contentId,
+    required int progressInSeconds,
+    required String token,
+  }) async {
+    // No need to send if progress is 0
+    if (progressInSeconds == 0) return;
+
+    final response = await http.post(
+      Uri.parse('$_baseUrl/content/$contentId/progress'),
+      headers: {
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'progress_in_seconds': progressInSeconds,
+      }),
+    );
+
+    if (response.statusCode != 200) {
+      // We can just print the error, as failing to sync isn't a critical crash
+      print('Failed to sync progress: ${response.body}');
+    }
+  }
 }
