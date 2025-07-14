@@ -1,9 +1,15 @@
+import 'dart:async';
 import 'package:audio_service/audio_service.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:selman/services/api_service.dart';
 
 // This is the main background audio handler class
 class MyAudioHandler extends BaseAudioHandler with SeekHandler {
   final _player = AudioPlayer();
+  final _apiService = ApiService(); // Create an instance of our service
+  Timer? _progressSyncTimer; // A timer for syncing progress
+  String? _authToken; // To hold the user's auth token
+  int? _currentContentId; // To hold the ID of the currently playing content
 
   MyAudioHandler() {
     // Listen for changes in the player's state and broadcast them
@@ -12,6 +18,16 @@ class MyAudioHandler extends BaseAudioHandler with SeekHandler {
     // We need to listen for when the player finds the duration of a track
     // and then update the main MediaItem with that duration.
     _listenForDurationChanges();
+  }
+
+  // The UI will call this to provide the necessary auth details
+  void setAuthToken(String? token) {
+    _authToken = token;
+  }
+
+  // The UI will call this to provide the content's database ID
+  void setCurrentContentId(int? contentId) {
+    _currentContentId = contentId;
   }
 
   void _listenForDurationChanges() {
