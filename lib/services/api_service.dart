@@ -239,4 +239,26 @@ class ApiService {
       throw Exception('Failed to load favorites.');
     }
   }
+
+  // Method to search for content
+  Future<List<Content>> searchContent(String term) async {
+    // We don't search if the term is too short
+    if (term.length < 3) {
+      return [];
+    }
+
+    final response = await http.get(
+      Uri.parse('$_baseUrl/search?term=$term'),
+      headers: {
+        'Accept': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      List<dynamic> body = jsonDecode(response.body);
+      return body.map((dynamic item) => Content.fromJson(item)).toList();
+    } else {
+      throw Exception('Failed to perform search.');
+    }
+  }
 }
