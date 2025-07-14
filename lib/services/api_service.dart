@@ -288,4 +288,26 @@ class ApiService {
       print('Failed to sync progress: ${response.body}');
     }
   }
+
+  // Method to get saved progress for a piece of content
+  Future<int?> fetchProgress(int contentId, String token) async {
+    final response = await http.get(
+      Uri.parse('$_baseUrl/content/$contentId/progress'),
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return data['progress_in_seconds'];
+    } else if (response.statusCode == 404) {
+      // It's normal for no progress to be found, so we return null
+      return null;
+    } else {
+      // For other errors, we throw an exception
+      throw Exception('Failed to fetch progress.');
+    }
+  }
 }
