@@ -6,10 +6,10 @@ import 'package:selman/services/api_service.dart';
 // This is the main background audio handler class
 class MyAudioHandler extends BaseAudioHandler with SeekHandler {
   final _player = AudioPlayer();
-  final _apiService = ApiService(); // Create an instance of our service
-  Timer? _progressSyncTimer; // A timer for syncing progress
-  String? _authToken; // To hold the user's auth token
-  int? _currentContentId; // To hold the ID of the currently playing content
+  final _apiService = ApiService();
+  Timer? _progressSyncTimer;
+  String? _authToken;
+  int? _currentContentId;
 
   MyAudioHandler() {
     // Listen for changes in the player's state and broadcast them
@@ -54,18 +54,51 @@ class MyAudioHandler extends BaseAudioHandler with SeekHandler {
   }
 
   @override
-  Future<void> play() => _player.play();
+  Future<void> play() {
+    _startProgressTimer();
+    return super.play();
+  }
 
   @override
-  Future<void> pause() => _player.pause();
+  Future<void> pause() {
+    _stopProgressTimer();
+    return super.pause();
+  }
 
   @override
   Future<void> seek(Duration position) => _player.seek(position);
 
   @override
   Future<void> stop() async {
+    _stopProgressTimer();
     await _player.stop();
     await super.stop();
+  }
+
+  void _startProgressTimer() {
+    // Cancel any existing timer
+    _progressSyncTimer?.cancel();
+    // Start a new timer that fires every 15 seconds
+    _progressSyncTimer = Timer.periodic(const Duration(seconds: 15), (timer) {
+      _syncProgress();
+    });
+  }
+
+  void _stopProgressTimer() {
+    // Sync one last time before stopping
+    _syncProgress();
+    _progressSyncTimer?.cancel();
+  }
+
+  void _syncProgress() {
+    if (_authToken == null || _currentContentId == null || !_player.playing) {
+      return;
+    }
+    _apiService.syncProgress(
+      contentId: _currentContentId!,
+      progressInSeconds: _player.position.inSeconds,
+      token: _authToken!,
+    );
   }
 
   // Helper method to transform just_audio events into audio_service states
