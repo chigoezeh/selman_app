@@ -28,7 +28,11 @@ class _PlayerScreenState extends State<PlayerScreen> {
   @override
   void initState() {
     super.initState();
+    final authProvider = context.read<AuthProvider>();
     _audioHandler = context.read<AuthProvider>().audioHandler;
+
+    _audioHandler.setAuthToken(authProvider.token);
+    _audioHandler.setCurrentContentId(widget.content.id);
 
     // Only start playing the track if playNow is true.
     if (widget.playNow) {

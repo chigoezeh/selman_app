@@ -1,17 +1,29 @@
+import 'dart:async';
 import 'package:audio_service/audio_service.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:selman/services/api_service.dart';
 
-// This is the main background audio handler class
 class MyAudioHandler extends BaseAudioHandler with SeekHandler {
   final _player = AudioPlayer();
+  final _apiService = ApiService();
+  Timer? _progressSyncTimer;
+  String? _authToken;
+  int? _currentContentId;
 
   MyAudioHandler() {
     // Listen for changes in the player's state and broadcast them
     _player.playbackEventStream.map(_transformEvent).pipe(playbackState);
-
-    // We need to listen for when the player finds the duration of a track
-    // and then update the main MediaItem with that duration.
     _listenForDurationChanges();
+  }
+
+  // The UI will call this to provide the necessary auth details
+  void setAuthToken(String? token) {
+    _authToken = token;
+  }
+
+  // The UI will call this to provide the content's database ID
+  void setCurrentContentId(int? contentId) {
+    _currentContentId = contentId;
   }
 
   void _listenForDurationChanges() {
@@ -30,7 +42,22 @@ class MyAudioHandler extends BaseAudioHandler with SeekHandler {
   Future<void> playMediaItem(MediaItem mediaItem) async {
     this.mediaItem.add(mediaItem);
     try {
-      await _player.setAudioSource(AudioSource.uri(Uri.parse(mediaItem.id)));
+      // Check for saved progress before setting the audio source
+      Duration? initialPosition;
+      if (_authToken != null && _currentContentId != null) {
+        final savedProgress =
+            await _apiService.fetchProgress(_currentContentId!, _authToken!);
+        if (savedProgress != null) {
+          initialPosition = Duration(seconds: savedProgress);
+        }
+      }
+
+      // Set the audio source, and if we have a saved position, seek to it
+      await _player.setAudioSource(
+        AudioSource.uri(Uri.parse(mediaItem.id)),
+        initialPosition: initialPosition,
+      );
+
       play();
     } catch (e) {
       print("Error playing media item: $e");
@@ -38,21 +65,50 @@ class MyAudioHandler extends BaseAudioHandler with SeekHandler {
   }
 
   @override
-  Future<void> play() => _player.play();
+  Future<void> play() {
+    _startProgressTimer();
+    return _player.play();
+  }
 
   @override
-  Future<void> pause() => _player.pause();
+  Future<void> pause() {
+    _stopProgressTimer();
+    return _player.pause();
+  }
+
+  @override
+  Future<void> stop() async {
+    _stopProgressTimer();
+    await _player.stop();
+    return await super.stop();
+  }
+
+  void _startProgressTimer() {
+    _progressSyncTimer?.cancel();
+    _progressSyncTimer = Timer.periodic(const Duration(seconds: 15), (timer) {
+      _syncProgress();
+    });
+  }
+
+  void _stopProgressTimer() {
+    _syncProgress();
+    _progressSyncTimer?.cancel();
+  }
+
+  void _syncProgress() {
+    if (_authToken == null || _currentContentId == null || !_player.playing) {
+      return;
+    }
+    _apiService.syncProgress(
+      contentId: _currentContentId!,
+      progressInSeconds: _player.position.inSeconds,
+      token: _authToken!,
+    );
+  }
 
   @override
   Future<void> seek(Duration position) => _player.seek(position);
 
-  @override
-  Future<void> stop() async {
-    await _player.stop();
-    await super.stop();
-  }
-
-  // Helper method to transform just_audio events into audio_service states
   PlaybackState _transformEvent(PlaybackEvent event) {
     return PlaybackState(
       controls: [
