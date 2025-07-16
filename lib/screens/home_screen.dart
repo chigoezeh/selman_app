@@ -35,7 +35,7 @@ class _ContentListScreenState extends State<ContentListScreen> {
 
   Future<void> _onRefresh() async {
     _fetchHomeData();
-    return _homeDataFuture;
+    await _homeDataFuture;
   }
 
   @override
