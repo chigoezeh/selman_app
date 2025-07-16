@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:selman/models/content.dart';
+import 'package:selman/models/home_data.dart';
+import 'package:selman/providers/auth_provider.dart';
+import 'package:selman/screens/content_detail_screen.dart';
 import 'package:selman/services/api_service.dart';
-import 'package:selman/widgets/content_card.dart';
-import 'package:selman/screens/about_screen.dart';
 import 'package:selman/screens/profile_screen.dart';
 import 'package:selman/screens/settings_screen.dart';
+import 'package:selman/screens/about_screen.dart';
 
 class ContentListScreen extends StatefulWidget {
   const ContentListScreen({super.key});
@@ -14,44 +17,36 @@ class ContentListScreen extends StatefulWidget {
 }
 
 class _ContentListScreenState extends State<ContentListScreen> {
-  // Create an instance of our ApiService
   final ApiService _apiService = ApiService();
-
-  // A variable to hold the result of our API call
-  Future<List<Content>>? _contentFuture;
+  Future<HomeData>? _homeDataFuture;
 
   @override
   void initState() {
     super.initState();
-    // Start the initial fetch
-    _fetchContent();
+    _fetchHomeData();
   }
 
-  // Create a dedicated method for fetching data
-  void _fetchContent() {
+  void _fetchHomeData() {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
     setState(() {
-      _contentFuture = _apiService.fetchContent();
+      _homeDataFuture = _apiService.fetchHomeData(authProvider.token);
     });
   }
 
-  // Create the method that the RefreshIndicator will call
   Future<void> _onRefresh() async {
-    setState(() {
-      _contentFuture = _apiService.fetchContent();
-    });
-    await _contentFuture;
+    _fetchHomeData();
+    return _homeDataFuture;
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('What\'s New'),
+        title: const Text("Selman"),
         actions: [
           PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert),
             onSelected: (value) {
-              // This function is called when a menu item is selected
               switch (value) {
                 case 'profile':
                   Navigator.push(
@@ -77,52 +72,136 @@ class _ContentListScreenState extends State<ContentListScreen> {
               const PopupMenuItem<String>(
                 value: 'profile',
                 child: ListTile(
-                  leading: Icon(Icons.person),
-                  title: Text('My Profile'),
-                ),
+                    leading: Icon(Icons.person), title: Text('My Profile')),
               ),
               const PopupMenuItem<String>(
                 value: 'settings',
                 child: ListTile(
-                  leading: Icon(Icons.settings),
-                  title: Text('Settings'),
-                ),
+                    leading: Icon(Icons.settings), title: Text('Settings')),
               ),
               const PopupMenuItem<String>(
                 value: 'about',
                 child: ListTile(
-                  leading: Icon(Icons.info_outline),
-                  title: Text('About Us'),
-                ),
+                    leading: Icon(Icons.info_outline), title: Text('About Us')),
               ),
             ],
           ),
         ],
       ),
       body: RefreshIndicator(
-        onRefresh: _onRefresh, // The function to call when pulled
-        child: Center(
-          child: FutureBuilder<List<Content>>(
-            future: _contentFuture,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const CircularProgressIndicator();
-              } else if (snapshot.hasError) {
-                return Text('Error: ${snapshot.error}');
-              } else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
-                final contentList = snapshot.data!;
-                return ListView.builder(
-                  itemCount: contentList.length,
-                  itemBuilder: (context, index) {
-                    final contentItem = contentList[index];
-                    return ContentCard(content: contentItem);
-                  },
-                );
-              } else {
-                return const Text('No content found.');
-              }
+        onRefresh: _onRefresh,
+        child: FutureBuilder<HomeData>(
+          future: _homeDataFuture,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (snapshot.hasError) {
+              return Center(child: Text('Error: ${snapshot.error}'));
+            } else if (snapshot.hasData) {
+              final homeData = snapshot.data!;
+              return SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (homeData.recentlyPlayed.isNotEmpty)
+                      _buildContentSection(
+                        title: 'Recently Played',
+                        contentList: homeData.recentlyPlayed,
+                      ),
+                    _buildContentSection(
+                      title: 'Newest Sermons',
+                      contentList: homeData.newestSermons,
+                    ),
+                    _buildContentSection(
+                      title: 'Trending Worship',
+                      contentList: homeData.trendingWorship,
+                    ),
+                  ],
+                ),
+              );
+            } else {
+              return const Center(child: Text('No content available.'));
+            }
+          },
+        ),
+      ),
+    );
+  }
+
+  // Helper widget to build a single section with a title and a horizontal list
+  Widget _buildContentSection({
+    required String title,
+    required List<Content> contentList,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+          child: Text(
+            title,
+            style: Theme.of(context)
+                .textTheme
+                .titleLarge
+                ?.copyWith(fontWeight: FontWeight.bold),
+          ),
+        ),
+        SizedBox(
+          height: 240, // Height of the horizontal list
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: contentList.length,
+            itemBuilder: (context, index) {
+              return SizedBox(
+                width: 160, // Width of each card in the list
+                child: _buildHorizontalContentCard(contentList[index]),
+              );
             },
           ),
+        ),
+      ],
+    );
+  }
+
+  // A smaller card designed for horizontal scrolling lists
+  Widget _buildHorizontalContentCard(Content content) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ContentDetailScreen(content: content),
+          ),
+        );
+      },
+      child: Card(
+        margin: const EdgeInsets.symmetric(horizontal: 8.0),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              height: 150,
+              width: double.infinity,
+              color: Colors.grey[800],
+              child: content.thumbnailUrl != null
+                  ? Image.network(content.thumbnailUrl!, fit: BoxFit.cover)
+                  : const Icon(Icons.play_circle_outline,
+                      color: Colors.white, size: 50),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(
+                content.title,
+                style: Theme.of(context)
+                    .textTheme
+                    .bodyMedium
+                    ?.copyWith(fontWeight: FontWeight.bold),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
         ),
       ),
     );
