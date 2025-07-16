@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:selman/models/content.dart';
 import 'package:selman/models/user.dart';
 import 'package:selman/models/playlist.dart';
+import 'package:selman/models/home_data.dart';
 
 class ApiService {
   // We use 10.0.2.2 because it is a special alias for the host machine's
@@ -308,6 +309,28 @@ class ApiService {
     } else {
       // For other errors, we throw an exception
       throw Exception('Failed to fetch progress.');
+    }
+  }
+
+  // Method to fetch the structured data for the home screen
+  Future<HomeData> fetchHomeData(String? token) async {
+    final headers = {
+      'Accept': 'application/json',
+    };
+    // Add the Authorization header only if a token exists
+    if (token != null) {
+      headers['Authorization'] = 'Bearer $token';
+    }
+
+    final response = await http.get(
+      Uri.parse('$_baseUrl/home'),
+      headers: headers,
+    );
+
+    if (response.statusCode == 200) {
+      return HomeData.fromJson(jsonDecode(response.body));
+    } else {
+      throw Exception('Failed to load home screen data.');
     }
   }
 }
